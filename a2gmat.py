@@ -23,12 +23,15 @@ def not_exist_create_folder(path):
     return
 
 def download(url, path):
-    try:
-        urlretrieve(url=url, filename=path)
-        sleep(2)
-    except urllib.error.HTTPError as e:
-        print('urllib.error.HTTPError', e)
-        input('paused')
+    if os.path.isfile(path):
+        print('--FileIsExist')
+    else:
+        try:
+            urlretrieve(url=url, filename=path)
+            sleep(2)
+        except urllib.error.HTTPError as e:
+            print('urllib.error.HTTPError', e)
+            input('paused')
 
 def main():
     browser = webdriver.Chrome(os.popen('which chromedriver').read().strip())
@@ -50,8 +53,9 @@ def main():
         title = sidebar.find('div', 'section-title').text.strip()
         print('')
         print('*' * 100)
+        print(title)
 
-        if title in ['錄音檔下載區']:
+        if title in ['錄音檔下載區', 'SC', 'CR']:
             continue
 
         # lv1
@@ -69,7 +73,7 @@ def main():
             not_exist_create_folder(folderLv2)
 
             browser.get(sub_url)
-            sleep(2)
+            sleep(70)
             soup = BeautifulSoup(browser.page_source, 'lxml')
 
             # write description
@@ -81,7 +85,7 @@ def main():
             # save mp3, pdf file
             for sub_content in soup.find_all('a', 'download'):
                 print(sub_content)
-                fileName = sub_content.get('data-x-origin-download-name')
+                fileName = sub_content.get('data-x-origin-download-name').replace('/', '-')
                 print(fileName)
                 filePath = os.path.join(folderLv2, fileName)
                 fileUrl = sub_content.get('href')
@@ -90,7 +94,7 @@ def main():
             # save mov file
             for sub_content in soup.find_all('script', 'w-json-ld'):
                 sub_content = json.loads(sub_content.text)
-                fileName = sub_content['name']
+                fileName = sub_content['name'].replace('/', '-')
                 wistiaUrl = sub_content['embedUrl']
 
                 # lv3
@@ -127,10 +131,10 @@ def main():
 if __name__ == '__main__':
     SCRIPT_FOLDER = os.path.dirname(os.path.abspath(__file__))
     A2GMAT = os.path.join(SCRIPT_FOLDER, 'a2gmat')
-    if os.path.isdir(A2GMAT):
-        shutil.rmtree(A2GMAT)
-    os.mkdir(A2GMAT)
+    if not os.path.isdir(A2GMAT):
+        # shutil.rmtree(A2GMAT)
+        os.mkdir(A2GMAT)
 
-    ACCOUNT = '*'
-    PASSWORD = '*'
+    ACCOUNT = input('account: ')
+    PASSWORD = input('password: ')
     main()
